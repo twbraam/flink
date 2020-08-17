@@ -60,6 +60,7 @@ import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
 import org.apache.flink.runtime.jobgraph.tasks.AbstractInvokable;
+import org.apache.flink.runtime.jobgraph.tasks.ExitStatusSecurityManager;
 import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.jobgraph.tasks.TaskOperatorEventGateway;
 import org.apache.flink.runtime.memory.MemoryManager;
@@ -718,7 +719,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 			executingThread.setContextClassLoader(userCodeClassLoader);
 
 			// run the invokable
-			invokable.invoke();
+			invokeSecure(invokable);
 
 			// make sure, we enter the catch block if the task leaves the invoke() method due
 			// to the fact that it has been canceled
@@ -1280,6 +1281,17 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 	// ------------------------------------------------------------------------
 	//  Utilities
 	// ------------------------------------------------------------------------
+
+	public void invokeSecure(AbstractInvokable invokable) throws Exception {
+		ExitStatusSecurityManager secManager = new ExitStatusSecurityManager();
+		System.setSecurityManager(secManager);
+
+		try {
+			invokable.invoke();
+		} catch (SecurityException e) {
+			LOG.warn("System.exit() called during Task execution {}.", taskNameWithSubtask);
+		}
+	}
 
 	private void cancelInvokable(AbstractInvokable invokable) {
 		// in case of an exception during execution, we still call "cancel()" on the task
