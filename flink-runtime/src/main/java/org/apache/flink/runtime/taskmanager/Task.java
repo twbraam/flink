@@ -1289,7 +1289,7 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		try {
 			invokable.invoke();
 		} catch (SecurityException e) {
-			LOG.warn("System.exit() called during Task execution {}.", taskNameWithSubtask);
+			LOG.warn("System.exit() called during Task execution {}.", taskNameWithSubtask, e);
 		}
 	}
 
