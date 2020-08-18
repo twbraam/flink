@@ -1,12 +1,16 @@
-package org.apache.flink.runtime.jobgraph.tasks;
+package org.apache.flink.runtime.security;
 
 import java.io.FileDescriptor;
 import java.net.InetAddress;
 import java.security.Permission;
 
-public class ExitStatusSecurityManager extends SecurityManager {
+/**
+ * A SecurityManager to fail on user code calling System.exit().
+ * */
+public class ExitCheckSecurityManager extends SecurityManager {
 
-	@Override public void checkExit(int status) {
+	@Override
+	public void checkExit(int status) {
 		throw new SecurityException(String.format("System.exit(%s) called during Task execution.", status));
 	}
 
@@ -38,8 +42,9 @@ public class ExitStatusSecurityManager extends SecurityManager {
 	public final void checkCreateClassLoader() {
 	}
 
+	@Override
 	public final void checkDelete(String file) {
-	};
+	}
 
 	@Override
 	public final void checkExec(String cmd) {
@@ -90,7 +95,7 @@ public class ExitStatusSecurityManager extends SecurityManager {
 	}
 
 	public final void checkPropertyAccess(String key) {
-	};
+	}
 
 	@Override
 	public final void checkRead(FileDescriptor fd) {

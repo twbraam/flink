@@ -60,7 +60,7 @@ import org.apache.flink.runtime.jobgraph.IntermediateDataSetID;
 import org.apache.flink.runtime.jobgraph.JobVertexID;
 import org.apache.flink.runtime.jobgraph.OperatorID;
 import org.apache.flink.runtime.jobgraph.tasks.AbstractInvokable;
-import org.apache.flink.runtime.jobgraph.tasks.ExitStatusSecurityManager;
+import org.apache.flink.runtime.security.ExitCheckSecurityManager;
 import org.apache.flink.runtime.jobgraph.tasks.InputSplitProvider;
 import org.apache.flink.runtime.jobgraph.tasks.TaskOperatorEventGateway;
 import org.apache.flink.runtime.memory.MemoryManager;
@@ -1283,13 +1283,17 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 	// ------------------------------------------------------------------------
 
 	public void invokeSecure(AbstractInvokable invokable) throws Exception {
-		ExitStatusSecurityManager secManager = new ExitStatusSecurityManager();
-		System.setSecurityManager(secManager);
+		SecurityManager prevSecManager = System.getSecurityManager();
+
+		ExitCheckSecurityManager exitSecManager = new ExitCheckSecurityManager();
+		System.setSecurityManager(exitSecManager);
 
 		try {
 			invokable.invoke();
 		} catch (SecurityException e) {
-			LOG.warn("System.exit() called during Task execution {}.", taskNameWithSubtask, e);
+			e.printStackTrace();
+		} finally {
+			System.setSecurityManager(prevSecManager);
 		}
 	}
 
